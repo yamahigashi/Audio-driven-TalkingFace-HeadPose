@@ -26,7 +26,7 @@ See options/base_options.py and options/test_options.py for more test options.
 See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
-#encoding:utf-8
+# encoding:utf-8
 import os
 from options.test_options import TestOptions
 from data import create_dataset
@@ -41,35 +41,48 @@ from sklearn import linear_model
 import pdb
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     opt = TestOptions().parse()  # get test options
     # hard-code some parameters for test
-    opt.num_threads = 0   # test code only supports num_threads = 1
-    opt.batch_size = 1    # test code only supports batch_size = 1
+    opt.num_threads = 0  # test code only supports num_threads = 1
+    opt.batch_size = 1  # test code only supports batch_size = 1
     opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
-    opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
-    opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
+    opt.no_flip = (
+        True  # no flip; comment this line if results on flipped images are needed.
+    )
+    opt.display_id = (
+        -1
+    )  # no visdom display; the test code saves the results to a HTML file.
 
-    opt.netG = 'unetac_adain_256'
-    opt.model = 'test'
+    opt.netG = "unetac_adain_256"
+    opt.model = "test"
     opt.Nw = 3
-    opt.norm = 'batch'
-    opt.dataset_mode = 'single_multi'
+    opt.norm = "batch"
+    opt.dataset_mode = "single_multi"
 
-    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
-    model = create_model(opt)      # create a model given opt.model and other options
-    model.setup(opt)               # regular setup: load and print networks; create schedulers
+    dataset = create_dataset(
+        opt
+    )  # create a dataset given opt.dataset_mode and other options
+    model = create_model(opt)  # create a model given opt.model and other options
+    model.setup(opt)  # regular setup: load and print networks; create schedulers
     # create a website
-    web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.epoch))  # define the website directory
-    #webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
-    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch), refresh=0, folder=opt.imagefolder)
+    web_dir = os.path.join(
+        opt.results_dir, opt.name, "%s_%s" % (opt.phase, opt.epoch)
+    )  # define the website directory
+    # webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
+    webpage = html.HTML(
+        web_dir,
+        "Experiment = %s, Phase = %s, Epoch = %s" % (opt.name, opt.phase, opt.epoch),
+        refresh=0,
+        folder=opt.imagefolder,
+    )
     # test with eval mode. This only affects layers like batchnorm and dropout.
     # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
     # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
     if opt.eval:
         model.eval()
     N = dataset.__len__()
-    features = torch.zeros((N,1,1,512)).cuda(opt.gpu_ids[0])
+    features = torch.zeros((N, 1, 1, 512)).cuda(opt.gpu_ids[0])
     control = 1
     for i, data in enumerate(dataset):
         if i >= opt.num_test:  # only apply our model to opt.num_test images.
@@ -80,17 +93,17 @@ if __name__ == '__main__':
         features[i] = feature
     if control == 4:
         poly = PolynomialFeatures(degree=512)
-        fea=features.cpu().numpy()
-        for m in range(0,512):
-            x = np.arange(1, features.shape[0]+1, 1)
-            y = fea[:,0,0,m]
+        fea = features.cpu().numpy()
+        for m in range(0, 512):
+            x = np.arange(1, features.shape[0] + 1, 1)
+            y = fea[:, 0, 0, m]
             z1 = np.polyfit(x, y, 10)
             p1 = np.poly1d(z1)
-            yvals=p1(x) 
-            fea[:,0,0,m]=yvals
-        features=torch.Tensor(fea).cuda(opt.gpu_ids[0])
+            yvals = p1(x)
+            fea[:, 0, 0, m] = yvals
+        features = torch.Tensor(fea).cuda(opt.gpu_ids[0])
 
-    #np.save('features.npy',features.cpu().numpy())
+    # np.save('features.npy',features.cpu().numpy())
     for i, data in enumerate(dataset):
         model.set_input(data)
         if control == 0:
@@ -98,31 +111,39 @@ if __name__ == '__main__':
         elif control == 1:
             # interpolation
             M = 25
-            if i % M == 0 or i == N-1:
+            if i % M == 0 or i == N - 1:
                 feature = features[i]
             else:
                 l = i // M * M
-                r = min(l + M, N-1)
-                feature = (i-l)/float(r-l) * (features[r]-features[l]) + features[l]
+                r = min(l + M, N - 1)
+                feature = (i - l) / float(r - l) * (
+                    features[r] - features[l]
+                ) + features[l]
         elif control == 2:
             # average by 3
             if i == 0:
                 feature = features[i]
             elif i == 1:
-                feature = torch.mean(features[i-1:i+1],dim=0)
+                feature = torch.mean(features[i - 1 : i + 1], dim=0)
             else:
-                feature = torch.mean(features[i-2:i+1],dim=0)
+                feature = torch.mean(features[i - 2 : i + 1], dim=0)
         elif control == 3:
             # average by all
-            feature = torch.mean(features,dim=0)
+            feature = torch.mean(features, dim=0)
         elif control == 4:
             # fit
             feature = features[i]
         model.forward_withfeat(feature)
         visuals = model.get_current_visuals()  # get image results
-        img_path = model.get_image_paths()     # get image paths
+        img_path = model.get_image_paths()  # get image paths
         if i % 5 == 0:  # save images to an HTML file
-            print('processing (%04d)-th image... %s' % (i, img_path))
-        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
+            print("processing (%04d)-th image... %s" % (i, img_path))
+        save_images(
+            webpage,
+            visuals,
+            img_path,
+            aspect_ratio=opt.aspect_ratio,
+            width=opt.display_winsize,
+        )
     webpage.save()  # save the HTML
-    print('control',control)
+    print("control", control)
