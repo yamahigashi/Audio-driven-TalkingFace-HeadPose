@@ -71,7 +71,7 @@ tensorflow-gpu==1.14.0
 termcolor==1.1.0
 torch==1.1.0
 torchfile==0.1.0
-torchvision==0.4.0
+torchvision==0.3
 tornado==6.0.3
 tqdm==4.19.6
 traitlets==4.3.2
@@ -81,3 +81,6 @@ wcwidth==0.1.7
 websocket-client==0.56.0
 Werkzeug==0.15.4
 wrapt==1.11.1
+kapre
+lucid
+python_speech_features
