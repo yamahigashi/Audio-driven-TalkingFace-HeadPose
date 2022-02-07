@@ -1,12 +1,12 @@
 # encoding:utf-8
 # test different audio
 import os
-from choose_bg_gexinghua2_reassign import choose_bg_gexinghua2_reassign2
-from trans_with_bigbg import merge_with_bigbg
+from .choose_bg_gexinghua2_reassign import choose_bg_gexinghua2_reassign2
+from .trans_with_bigbg import merge_with_bigbg
 import glob
-import pdb
-from PIL import Image
-import numpy as np
+# import pdb
+# from PIL import Image
+# import numpy as np
 import sys
 
 
